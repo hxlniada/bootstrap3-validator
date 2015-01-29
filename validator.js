@@ -1,3 +1,6 @@
+// bootstrap3-validator.js
+// 黄雪良, https://github.com/hxlniada/bootstrap3-validator
+// Licensed under the MIT license.
 $.fn.extend({
 	validator: function(options) {
 		var checkGroup = [];
@@ -48,6 +51,10 @@ $.fn.extend({
 
 $.extend({
 	validator: {
+		extend: function(options) {
+			$.extend(this.rules, options.rules);
+			$.extend(this.messages, options.messages);
+		},
 		validRender: function($element, $inputGroup) {
 			$inputGroup.removeClass('has-error').addClass('has-success').find('.help-block').text('');
 		},
@@ -72,13 +79,14 @@ $.extend({
 			}
 		},
 		rules: {
-			remote: function(value, url, $element, $inputGroup, check) {
+			remote: function(value, url, $element, $inputGroup, _check) {
+				//如果检测失败，直接返回失败的内容
 				if ($.validator.hasValue($element.data('invalids') || [], value)) {
 					$.validator.remoteHanlder.call(this, value, false, $element, $inputGroup);
-					return $.validator.messages.remote.pending;
+					return $.validator.messages.remote.fail;
 				}
 
-				if (check) {
+				if (_check) {
 					return true;
 				}
 
@@ -119,7 +127,7 @@ $.extend({
 			email: '不是合法的邮箱格式'
 		},
 		//check表示是否是主动检测
-		checkValid: function(element, validation, $inputGroup, check) {
+		checkValid: function(element, validation, $inputGroup, _check) {
 			var $element = $(element),
 				value = $.trim($element.val()),
 				i, ruleName, params, invalidValues, message,
@@ -137,7 +145,7 @@ $.extend({
 				params = rules[i].split('::')[1];
 
 				//获取检测后的结果
-				message = $.validator.rules[ruleName](value, params, $element, $inputGroup, check);
+				message = $.validator.rules[ruleName](value, params, $element, $inputGroup, _check);
 				
 				if (typeof message === 'string') {
 					if (ruleName !== 'remote') {
