@@ -15,7 +15,19 @@ $.fn.extend({
 			}
 
 			$element.on('change blur', function() {
+				clearTimeout($element.data('validator-timer'));
 				$.validator.checkValid(this, validation, $inputGroup);
+			});
+
+			$element.on('keyup', function() {
+				var _this = this, timer;
+				
+				clearTimeout($element.data('validator-timer'));
+				timer = setTimeout(function() {
+					$.validator.checkValid(_this, validation, $inputGroup);
+				}, $.validator.delay);
+
+				$element.data('validator-timer', timer);
 			});
 
 			checkGroup.push({
@@ -51,9 +63,9 @@ $.fn.extend({
 
 $.extend({
 	validator: {
+		delay: 500,
 		extend: function(options) {
-			$.extend(this.rules, options.rules);
-			$.extend(this.messages, options.messages);
+			$.extend(true, this, options);
 		},
 		validRender: function($element, $inputGroup) {
 			$inputGroup.removeClass('has-error').addClass('has-success').find('.help-block').text('');
@@ -68,7 +80,7 @@ $.extend({
 				return;
 			}
 
-			if (data === false || data.msg === 'valid_success') {
+			if (data.msg === 'valid_success') {
 				$element.data('remote', 'success');
 				$.validator.validRender($element, $inputGroup);
 				return;
@@ -114,6 +126,23 @@ $.extend({
 			},
 			email: function(value) {
 				return /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(value) ? true: $.validator.messages['email'];
+			},
+			url: function(value) {
+				return /(https?|ftp|mms):\/\/([A-z0-9]+[_\-]?[A-z0-9]+\.)*[A-z0-9]+\-?[A-z0-9]+\.[A-z]{2,}(\/.*)*\/?/.test(value) ? true : $.validator.messages['url'];
+			},
+			maxLength: function(value, maxLength) {
+				maxLength = parseInt(maxLength, 10);
+				return value.length >= maxLength ? $.validator.messages.maxLength.replace('{{1}}', maxLength) : true;
+			},
+			minLength: function(value, minLength) {
+				minLength = parseInt(minLength, 10);
+				return value.length <= minLength ? $.validator.messages.minLength.replace('{{1}}', minLength) : true;
+			},
+			range: function(value, range) {
+				var min = parseInt(range.split(',')[0], 10),
+					max = parseInt(range.split(',')[1], 10);
+
+				return (value.length <= max && value.length >= min) ? $.validator.messages.range.replace('{{1}}', min).replace('{{2}}', max) : true;
 			}
 		},
 		messages: {
@@ -124,7 +153,11 @@ $.extend({
 			},
 			required: '此处不能为空',
 			mobile: '不是合法的手机号码',
-			email: '不是合法的邮箱格式'
+			email: '不是合法的邮箱格式',
+			maxLength: '长度不能超过{{1}}',
+			minLength: '长度不能小于{{1}}',
+			url: '不是合法的url格式',
+			range: '长度必须不小于{{1}}不超过{{2}}'
 		},
 		//check表示是否是主动检测
 		checkValid: function(element, validation, $inputGroup, _check) {
