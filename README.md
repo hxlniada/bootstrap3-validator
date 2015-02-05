@@ -23,8 +23,11 @@ $.validator.extend({
 ```
 ##使用方法
 > 首先，该插件暂时只支持form-group验证
+
 > 其次，验证信息要写在form-group上，而不是input/select...这些表单元素上
+
 > 再次，data-target指向验证的input/select...
+
 ```
 <form><!--wrapper-->
     <div class="form-group" data-validation="required|remote::xxx" data-target="userId">
