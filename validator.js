@@ -85,17 +85,20 @@ $.extend({
 				$.validator.validRender($element, $inputGroup);
 				return;
 			} else {
-				$element.data('invalids', $element.data('invalids').concat(value));
+				$element.data('remoteInvalids')[value] = $.validator.messages.remote.fail;
 				$element.data('remote', 'fail');
 				$.validator.invalidRender($element, $inputGroup, $.validator.messages.remote.fail);
 			}
 		},
 		rules: {
 			remote: function(value, url, $element, $inputGroup, _check) {
+				if (!$element.data('remoteInvalids')) {
+					$element.data('remoteInvalids', {});
+				}
 				//如果检测失败，直接返回失败的内容
-				if ($.validator.hasValue($element.data('invalids') || [], value)) {
+				if (value in ($element.data('remoteInvalids'))) {
 					$.validator.remoteHanlder.call(this, value, false, $element, $inputGroup);
-					return $.validator.messages.remote.fail;
+					return $element.data('remoteInvalids')[value];
 				}
 
 				if (_check) {
@@ -130,13 +133,16 @@ $.extend({
 			url: function(value) {
 				return /(https?|ftp|mms):\/\/([A-z0-9]+[_\-]?[A-z0-9]+\.)*[A-z0-9]+\-?[A-z0-9]+\.[A-z]{2,}(\/.*)*\/?/.test(value) ? true : $.validator.messages['url'];
 			},
+			webUrl: function(value) {
+				return /(https?):\/\/([A-z0-9]+[_\-]?[A-z0-9]+\.)*[A-z0-9]+\-?[A-z0-9]+\.[A-z]{2,}(\/.*)*\/?/.test(value) ? true : $.validator.messages['webUrl'];
+			},
 			maxLength: function(value, maxLength) {
 				maxLength = parseInt(maxLength, 10);
-				return value.length >= maxLength ? $.validator.messages.maxLength.replace('{{1}}', maxLength) : true;
+				return value.length > maxLength ? $.validator.messages.maxLength.replace('{{1}}', maxLength) : true;
 			},
 			minLength: function(value, minLength) {
 				minLength = parseInt(minLength, 10);
-				return value.length <= minLength ? $.validator.messages.minLength.replace('{{1}}', minLength) : true;
+				return value.length < minLength ? $.validator.messages.minLength.replace('{{1}}', minLength) : true;
 			},
 			range: function(value, range) {
 				var min = parseInt(range.split(',')[0], 10),
@@ -157,6 +163,7 @@ $.extend({
 			maxLength: '长度不能超过{{1}}',
 			minLength: '长度不能小于{{1}}',
 			url: '不是合法的url格式',
+			webUrl: '不是合法的(http/https)url格式',
 			range: '长度必须不小于{{1}}不超过{{2}}'
 		},
 		//check表示是否是主动检测
